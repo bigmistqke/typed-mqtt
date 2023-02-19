@@ -7,6 +7,7 @@ import TypedMqtt from "../src";
 
 const mqtt = new TypedMqtt<{
   "/path/*/path": string;
+  "/path/a/path": number;
   "/*/path": number;
 }>();
 
@@ -21,12 +22,15 @@ describe("mqtt.send", () => {
     // @ts-expect-error
     mqtt.send("/path/1/path", 0);
   });
+  it("should not give type-error when overlapping routes create union of valid types", async () => {
+    mqtt.send("/path/a/path", "string");
+    mqtt.send("/path/a/path", 0);
+  });
   it("should not give type-error when correct type is sent", async () => {
     mqtt.send("/path/1/path", "string");
+    mqtt.send("/path/a/path", 0);
   });
 });
-const x: number = 0;
-x.split();
 
 describe("mqtt.subscribe", () => {
   it("should give type-error when invalid path is subscribed", async () => {
@@ -36,6 +40,15 @@ describe("mqtt.subscribe", () => {
   it("should give type-error when incorrect parameter-type is assumed", async () => {
     // @ts-expect-error
     mqtt.subscribe("/path/1/path", (args: number) => args);
+  });
+  it("should give type-error when overlapping routes are not considered", async () => {
+    mqtt.subscribe("/path/a/path", args => {
+      // @ts-expect-error
+      args.split("");
+    });
+  });
+  it("should not give type-error when overlapping routes creates union of valid types", async () => {
+    mqtt.subscribe("/path/a/path", (args: number | string) => args);
   });
   it("should not give type-error when correct parameter-type is assumed", async () => {
     mqtt.subscribe("/path/1/path", (args: string) => args);

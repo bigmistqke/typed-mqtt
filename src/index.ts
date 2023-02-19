@@ -12,6 +12,10 @@ import init from "react_native_mqtt";
  *
  */
 
+type Normalize<T> = T extends (...args: infer A) => infer R
+  ? (...args: Normalize<A>) => Normalize<R>
+  : { [K in keyof T]: Normalize<T[K]> };
+
 type MapParts<Part> = Part extends "*" ? string : Part;
 type Parts<Path> = Path extends `${infer PartA}/${infer PartB}`
   ? [MapParts<PartA>, "/", ...Parts<PartB>]
@@ -32,7 +36,7 @@ type PickKeysByValueType<T, PathParts extends unknown[]> = {
     : never;
 }[keyof T];
 
-type FindPath<T, Path> = PickKeysByValueType<T, Parts<Path>>;
+type FindPath<T, Path> = Normalize<PickKeysByValueType<T, Parts<Path>>>;
 
 type Packet = {
   topic: string;
@@ -160,7 +164,7 @@ class _TypedMqtt<T extends {}, U extends {}> {
   };
   subscribe = <Path extends string, Result extends FindPath<U, Path>>(
     topic: Path & (Result extends never ? never : Path),
-    callback: Result extends never ? never : (value: Result) => void
+    callback: (value: Result) => void
   ) => {
     this.client.subscribe(topic);
     this.subscriptions[topic as string] = callback as any;
