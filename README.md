@@ -3,6 +3,7 @@
 A typesafe wrapper around MQTT-clients.<br/>
 
 - Describe the valid paths and their respective types of data.
+- Dynamic paths with wildcards are supported
 - Get type-errors if invalid paths are being subscribed to or data sent to.
 - Get type-errors if incorrect data is sent to a valid path.
 
@@ -21,6 +22,7 @@ mqtt.connect({ protocol: "ws" | "wss", url: "url_to_your_broker", port: 44 });
 
 // no type-error
 mqtt.send("/path/1/path", 0)
+mqtt.send("/path/2/path", 0)
 mqtt.subscribe("/path/1/path", (arg) => {})
 
 // type-error: incorrect path
