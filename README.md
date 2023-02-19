@@ -46,6 +46,39 @@ mqtt.subscribe("/path/1/path", (arg) => {
 })
 ```
 
+Overlapping paths creates a union of types.
+
+```tsx
+import TypedMqtt from 'typed-mqtt'
+
+const mqtt = new TypedMqtt<{
+  "/path/*/path": number;
+  "/path/a/path": string;
+}>();
+
+// no type-error
+mqtt.send("/path/a/path", "a")
+mqtt.send("/path/random/path", 0)
+
+// no type-error: 'a' is also valid to `*`
+mqtt.send("/path/a/path", 0)
+
+// type-error: `/path/*/path` only accepts `number`
+// Argument of type 'string' is not assignable to parameter of type 'number'
+mqtt.send("/path/random/path", "a")
+
+mqtt.subscribe("/path/a/path", (arg) => {
+  // type-error: `/path/a/path` fits `/path/a/path` and `/path/*/path`, so the type of arg is `string` | `number`
+  // 'split' does not exist on type 'number'
+  arg.split('/')
+})
+
+mqtt.subscribe("/path/random/path", (arg) => {
+  // no type-error: `/path/random/path` only fits `/path/*/path`, so the type of arg is `number`
+  arg * 2
+})
+```
+
 ## TODO
 
 This repo is currently a wrapper around `react_native_mqtt` which I was using in a react-native project. `react_native_mqtt` has no typescript-support and pollutes the global namespace in order for it to work. This makes testing this library impossible. 
