@@ -26,11 +26,14 @@ mqtt.send("/path/2/path", 0)
 mqtt.subscribe("/path/1/path", (arg) => {})
 
 // type-error: invalid path
+// Argument of type 'string' is not assignable to parameter of type 'never'.
 mqtt.send("/poth/1/path", 0)
 // type-error: invalid value-type
+// Argument of type 'number' is not assignable to parameter of type 'string'
 mqtt.send("/path/1/path", "test")
 
 // type-error: invalid path
+// Argument of type 'string' is not assignable to parameter of type 'never'.
 mqtt.subscribe("/poth/1/path", (arg) => {})
 
 mqtt.subscribe("/path/1/path", (arg) => {
