@@ -30,7 +30,9 @@ type PickKeysByValueType<T, PathParts extends unknown[]> = {
     infer Path extends string[],
     infer Value extends unknown
   ]
-    ? PathParts extends Path
+    ? Path extends PathParts
+      ? Value
+      : PathParts extends Path
       ? Value
       : never
     : never;
@@ -150,7 +152,7 @@ class _TypedMqtt<T extends {}, U extends {}> {
   };
 
   send = <Path extends string, Result extends FindPath<U, Path>>(
-    topic: Path & (Result extends never ? never : Path),
+    topic: Result extends never ? never : Path,
     data: Result
   ) => {
     // TODO: optionally validate types with Zod
@@ -162,21 +164,27 @@ class _TypedMqtt<T extends {}, U extends {}> {
 
     this.client.publish(topic, serialized);
   };
-  subscribe = <Path extends string, Result extends FindPath<U, Path>>(
-    topic: Path & (Result extends never ? never : Path),
-    callback: (value: Result) => void
-  ) => {
-    this.client.subscribe(topic);
-    this.subscriptions[topic as string] = callback as any;
-  };
 
   unsubscribe = <Path extends string, Result extends FindPath<U, Path>>(
-    topic: Path & (Result extends never ? never : Path)
+    topic: Result extends never ? never : Path
   ) => {
     this.client.unsubscribe(topic);
     if (typeof topic === "string") {
       delete this.subscriptions[topic];
     }
+  };
+
+  subscribe = <
+    Path extends string,
+    Result extends Normalize<
+      PickKeysByValueType<ParseKeysObject<T>, Parts<Path>>
+    >
+  >(
+    topic: Result extends never ? never : Path,
+    callback: (value: Result) => void
+  ) => {
+    this.client.subscribe(topic);
+    this.subscriptions[topic as string] = callback as any;
   };
 }
 

@@ -14,7 +14,7 @@ const mqtt = new TypedMqtt<{
 mqtt.connect({ url: "", port: 44 });
 
 describe("mqtt.send", () => {
-  it("should give type-error when invalid path is sent to", async () => {
+  it("should give type-error when static path is invalid", async () => {
     // @ts-expect-error
     mqtt.send("/path/1/1/path", 0);
   });
@@ -23,8 +23,8 @@ describe("mqtt.send", () => {
     mqtt.send("/path/1/path", 0);
   });
   it("should not give type-error when overlapping routes create union of valid types", async () => {
-    mqtt.send("/path/a/path", "string");
     mqtt.send("/path/a/path", 0);
+    mqtt.send("/path/a/path", "string");
   });
   it("should not give type-error when correct type is sent", async () => {
     mqtt.send("/path/1/path", "string");
