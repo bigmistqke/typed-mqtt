@@ -18,28 +18,28 @@ Use it:
 import TypedMqtt from 'typed-mqtt'
 
 const mqtt = new TypedMqtt<{
-  "/path/*/path": number;
+  '/path/*/path': number;
 }>();
 
-mqtt.connect({ protocol: "ws" | "wss", url: "url_to_your_broker", port: 44 });
+mqtt.connect({ protocol: 'ws' | 'wss', url: 'url_to_your_broker', port: 44 });
 
 // no type-error
-mqtt.send("/path/1/path", 0)
-mqtt.send("/path/2/path", 0)
-mqtt.subscribe("/path/1/path", (arg) => {})
+mqtt.send('/path/1/path', 0)
+mqtt.send('/path/2/path', 0)
+mqtt.subscribe('/path/1/path', (arg) => {})
 
 // type-error: invalid path
 // Argument of type 'string' is not assignable to parameter of type 'never'.
-mqtt.send("/poth/1/path", 0)
+mqtt.send('/poth/1/path', 0)
 // type-error: invalid value-type
 // Argument of type 'number' is not assignable to parameter of type 'string'
-mqtt.send("/path/1/path", "test")
+mqtt.send('/path/1/path', 'test')
 
 // type-error: invalid path
 // Argument of type 'string' is not assignable to parameter of type 'never'.
-mqtt.subscribe("/poth/1/path", (arg) => {})
+mqtt.subscribe('/poth/1/path', (arg) => {})
 
-mqtt.subscribe("/path/1/path", (arg) => {
+mqtt.subscribe('/path/1/path', (arg) => {
   // type-error: invalid value-type
   // 'split' does not exist on type 'number'
   arg.split('/')
@@ -52,31 +52,58 @@ Overlapping paths creates a union of types.
 import TypedMqtt from 'typed-mqtt'
 
 const mqtt = new TypedMqtt<{
-  "/path/*/path": number;
-  "/path/a/path": string;
+  '/path/*/path': number;
+  '/path/a/path': string;
 }>();
 
 // no type-error
-mqtt.send("/path/a/path", "a")
-mqtt.send("/path/random/path", 0)
+mqtt.send('/path/a/path', 'a')
+mqtt.send('/path/random/path', 0)
 
-// no type-error: 'a' is also valid to `*`
-mqtt.send("/path/a/path", 0)
+// no type-error: 'a' is also valid to '*'
+mqtt.send('/path/a/path', 0)
 
-// type-error: `/path/*/path` only accepts `number`
+// type-error: '/path/*/path' only accepts 'number'
 // Argument of type 'string' is not assignable to parameter of type 'number'
-mqtt.send("/path/random/path", "a")
+mqtt.send('/path/random/path', 'a')
 
-mqtt.subscribe("/path/a/path", (arg) => {
-  // type-error: `/path/a/path` fits `/path/a/path` and `/path/*/path`, so the type of arg is `string` | `number`
+mqtt.subscribe('/path/a/path', (arg) => {
+  // type-error: '/path/a/path' fits '/path/a/path' and '/path/*/path', so the type of arg is 'string' | 'number'
   // 'split' does not exist on type 'number'
   arg.split('/')
 })
 
-mqtt.subscribe("/path/random/path", (arg) => {
-  // no type-error: `/path/random/path` only fits `/path/*/path`, so the type of arg is `number`
+mqtt.subscribe('/path/random/path', (arg) => {
+  // no type-error: '/path/random/path' only fits '/path/*/path', so the type of arg is 'number'
   arg * 2
 })
+```
+
+Dynamic paths
+
+```tsx
+import TypedMqtt from 'typed-mqtt'
+
+const mqtt = new TypedMqtt<{
+  '/path/*/path': number;
+  '/path/a/path': string;
+}>();
+
+const union = Math.floor() > 0.5 ? "b" : "c"
+
+// type-error: `/path/${union}/path` is being typed as 'string'
+mqtt.send(`/path/${union}/path`, 0)
+// no type-error: 'as const' turns path's type to `/path/${"b" | "c"}/path`
+mqtt.send(`/path/${union}/path` as const, 0)
+// type-error: `/path/${"b" | "c"}/path` does not fit `/path/a/path`
+mqtt.send(`/path/${union}/path` as const, 'a')
+
+const random : string = externalApiCall()
+
+// no type-error: `/path/${string}/path` fits `/path/*/path`
+mqtt.send(`/path/${random}/path` as const, 0)
+// no type-error: `/path/${string}/path` fits `/path/a/path`
+mqtt.send(`/path/${random}/path` as const, "a")
 ```
 
 ## TODO
